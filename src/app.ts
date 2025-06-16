@@ -9,7 +9,8 @@ export const app = express();
 app
   .use(morgan("dev"))
   .use(helmet())
-  .use(express.urlencoded({ extended: true }));
+  .use(express.urlencoded({ extended: true }))
+  .use(express.json());
 
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "same-site");

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import { processPdf } from "../../service/process-document";
 
 export const pdfUploadFilesController = (req: Request, res: Response): any => {
   if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
@@ -7,12 +8,12 @@ export const pdfUploadFilesController = (req: Request, res: Response): any => {
 
   const files = req.files as Express.Multer.File[];
 
-  console.log(files);
-
   const fileInfo = files.map((file) => ({
     filename: file.filename,
     path: file.path,
   }));
+
+  processPdf(fileInfo[0].path);
 
   res.status(200).json({
     message: `${files.length} files uploaded successfully!`,
