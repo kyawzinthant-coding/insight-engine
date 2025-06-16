@@ -12,8 +12,8 @@ export async function processPdf(filePath: string) {
     const extractedText = pdfData.text;
 
     console.log(`✅ Text extracted successfully.`);
-    console.log(`   - Total Pages: ${pdfData.numpages}`);
-    console.log(`   - Text Length: ${extractedText.length} characters\n`);
+    // console.log(`   - Total Pages: ${pdfData.numpages}`);
+    // console.log(`   - Text Length: ${extractedText.length} characters\n`);
 
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 1000, // Max characters per chunk
@@ -22,18 +22,20 @@ export async function processPdf(filePath: string) {
 
     const chunks = await splitter.splitText(extractedText);
 
-    console.log(`✅ Text chunked successfully.`);
+    console.log(`✅ Text chunked successfully for ${filePath}.`);
     console.log(`   - Number of chunks created: ${chunks.length}\n`);
 
-    for (let i = 0; i < Math.min(3, chunks.length); i++) {
-      console.log(`\n--- Chunk ${i + 1} (Length: ${chunks[i].length}) ---`);
-      console.log(chunks[i]);
-      console.log("-------------------------------------\n");
-    }
+    // for (let i = 0; i < Math.min(1, chunks.length); i++) {
+    //   console.log(`\n--- Chunk ${i + 1} (Length: ${chunks[i].length}) ---`);
+    //   console.log(chunks[i]);
+    //   console.log("-------------------------------------\n");
+    // }
 
-    if (chunks.length > 3) {
-      console.log(`... and ${chunks.length - 3} more chunks.`);
-    }
+    // if (chunks.length > 3) {
+    //   console.log(`... and ${chunks.length - 3} more chunks.`);
+    // }
+
+    return chunks;
   } catch (error) {
     console.error("An error occurred during PDF processing:", error);
   }

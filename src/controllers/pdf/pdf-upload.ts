@@ -1,7 +1,11 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { processPdf } from "../../service/process-document";
+import fileQueue from "../../jobs/queues/filesQueue";
 
-export const pdfUploadFilesController = (req: Request, res: Response): any => {
+export const pdfUploadFilesController = async (
+  req: Request,
+  res: Response
+): Promise<any> => {
   if (!req.files || (req.files as Express.Multer.File[]).length === 0) {
     return res.status(400).json("No Files were upload");
   }
@@ -13,7 +17,18 @@ export const pdfUploadFilesController = (req: Request, res: Response): any => {
     path: file.path,
   }));
 
-  processPdf(fileInfo[0].path);
+  try {
+    for (const file of files) {
+      console.log(`Adding job to queue for file: ${file.originalname}`);
+
+      await fileQueue.add("process-pdf", {
+        filePath: file.path,
+        originalName: file.filename,
+      });
+    }
+  } catch (error) {
+    console.log("Queue Job Worker Error", error.message);
+  }
 
   res.status(200).json({
     message: `${files.length} files uploaded successfully!`,

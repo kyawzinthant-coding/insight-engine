@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "nodemon src/index.ts",
     "build": "tsc --project tsconfig.prod.json",
+    "work": "nodemon src/jobs/workers/filesWorker.ts",
     "start": "node dist/src/index.js"
   },
   "keywords": [],

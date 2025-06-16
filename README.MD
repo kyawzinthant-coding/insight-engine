@@ -1,5 +1,5 @@
 - [x] Upload Multiple Files
-- [ ] implement queue worker
+- [x] implement queue worker
 - [x] read pdf and chunk the text
 - [ ] combine those knowledge
 - [ ] store in vector db
