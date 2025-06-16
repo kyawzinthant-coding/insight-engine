@@ -7,7 +7,8 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc --project tsconfig.prod.json",
     "work": "nodemon src/jobs/workers/filesWorker.ts",
-    "start": "node dist/src/index.js"
+    "start": "node dist/src/index.js",
+    "inspect": "ts-node src/inspect-db.ts"
   },
   "keywords": [],
   "author": "",
@@ -25,10 +26,13 @@
     "typescript": "^5.8.2"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@types/cookie-parser": "^1.4.8",
     "@types/node-cron": "^3.0.11",
     "axios": "^1.8.2",
     "bullmq": "^5.53.3",
+    "chromadb": "^3.0.3",
+    "chromadb-default-embed": "^2.14.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

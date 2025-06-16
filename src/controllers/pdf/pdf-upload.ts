@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
-import { processPdf } from "../../service/process-document";
 import fileQueue from "../../jobs/queues/filesQueue";
+import { cleanUpPreviousData } from "../../service/vector-store-service";
+import fs from "fs/promises";
 
 export const pdfUploadFilesController = async (
   req: Request,
@@ -12,12 +13,11 @@ export const pdfUploadFilesController = async (
 
   const files = req.files as Express.Multer.File[];
 
-  const fileInfo = files.map((file) => ({
-    filename: file.filename,
-    path: file.path,
-  }));
-
   try {
+    console.log(files);
+
+    await cleanUpPreviousData();
+
     for (const file of files) {
       console.log(`Adding job to queue for file: ${file.originalname}`);
 
@@ -26,12 +26,18 @@ export const pdfUploadFilesController = async (
         originalName: file.filename,
       });
     }
-  } catch (error) {
-    console.log("Queue Job Worker Error", error.message);
-  }
 
-  res.status(200).json({
-    message: `${files.length} files uploaded successfully!`,
-    files: fileInfo,
-  });
+    res.status(200).json({
+      message: `Successfully cleared old data and queued ${files.length} new files for processing!`,
+    });
+  } catch (error) {
+    for (const file of files) {
+      fs.unlink(file.path);
+    }
+
+    res.status(500).json({
+      message: "An internal server error occurred.",
+      error: error.message,
+    });
+  }
 };
