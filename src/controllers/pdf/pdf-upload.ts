@@ -14,8 +14,6 @@ export const pdfUploadFilesController = async (
   const files = req.files as Express.Multer.File[];
 
   try {
-    console.log(files);
-
     await cleanUpPreviousData();
 
     for (const file of files) {

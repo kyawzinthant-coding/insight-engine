@@ -13,13 +13,14 @@ export async function generateChatResponse(
 ): Promise<string> {
   // Construct a detailed prompt for the AI
   const prompt = `You are an expert assistant.
-   Using ONLY the following context from documents,
-    please answer the user's question.
-    The context is provided in a JSON array. 
-    If the answer is not in the context, say 'I cannot find that information in the provided documents.'
+ Using ONLY the following context from documents,
+  please answer the user's question. 
+  **make sure you Format your entire response using Markdown.** 
+  This includes using bullet points, bold text code block, table, etc., where appropriate.
+If the answer is not in the context, say 'I cannot find that information in the provided documents.'
 
   Context:
-  ${JSON.stringify(context)}
+    ${context}
 
   User's Question:
   ${question}`;
