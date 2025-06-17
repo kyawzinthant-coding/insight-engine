@@ -1,7 +1,10 @@
 import { ChromaClient, EmbeddingFunction } from "chromadb";
 import { generateEmbedding } from "./embedding-service";
 
-const client = new ChromaClient();
+const client = new ChromaClient({
+  host: "127.0.0.1",
+  port: 8000,
+});
 
 class GoogleAIEmbeddingFunction implements EmbeddingFunction {
   public async generate(texts: string[]): Promise<number[][]> {
@@ -24,15 +27,17 @@ export async function getKnowledgeCollection() {
   return collection;
 }
 
-export async function queryKnowledgeBase(question: string): Promise<string[]> {
-  const collection = getKnowledgeCollection();
+export async function queryKnowledgeBase(question: string) {
+  const collection = await getKnowledgeCollection();
 
-  const results = (await collection).query({
+  const results = await collection.query({
     queryTexts: [question],
     nResults: 5,
   });
 
-  return (await results).documents[0];
+  console.log(results);
+
+  return results.documents[0];
 }
 
 export async function cleanUpPreviousData() {
