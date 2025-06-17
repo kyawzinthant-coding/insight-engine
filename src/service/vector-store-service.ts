@@ -24,14 +24,29 @@ export async function getKnowledgeCollection() {
   return collection;
 }
 
+export async function queryKnowledgeBase(question: string): Promise<string[]> {
+  const collection = getKnowledgeCollection();
+
+  const results = (await collection).query({
+    queryTexts: [question],
+    nResults: 5,
+  });
+
+  return (await results).documents[0];
+}
+
 export async function cleanUpPreviousData() {
   try {
     await client.deleteCollection({ name: "insight_engine_knowledge" });
     console.log("✅ Previous collection deleted successfully.");
   } catch (error: any) {
+    if (error.name === "ChromaNotFoundError") {
+      console.log("No previous collection to delete. Starting fresh.");
+    }
     if (error.message.includes("does not exist")) {
       console.log("No previous collection to delete. Starting fresh.");
     } else {
+      console.log(error);
       throw error;
     }
   }

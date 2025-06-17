@@ -31,6 +31,8 @@ export const pdfUploadFilesController = async (
       message: `Successfully cleared old data and queued ${files.length} new files for processing!`,
     });
   } catch (error) {
+    console.error("🔴 FULL ERROR OBJECT IN CONTROLLER:", error);
+
     for (const file of files) {
       fs.unlink(file.path);
     }
