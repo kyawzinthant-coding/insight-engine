@@ -1,17 +1,9 @@
 import "dotenv/config";
 import { Job, Worker } from "bullmq";
-import Redis from "ioredis";
 import { processPdf } from "../../service/process-document";
 import { getKnowledgeCollection } from "../../service/vector-store-service";
 import fs from "fs/promises";
-
-console.log(process.env.REDIS_PORT);
-
-const connection = new Redis({
-  host: process.env.REDIS_HOST,
-  port: parseInt(process.env.REDIS_PORT) || 6379,
-  maxRetriesPerRequest: null,
-});
+import connection from "../../service/redis-service";
 
 const fileWorker = new Worker(
   "FileQueue",
@@ -52,6 +44,7 @@ fileWorker.on("completed", (job) => {
   console.log(`Job completed with Job id ${job.id}`);
 });
 
-fileWorker.on("failed", (job) => {
-  console.log(`Failed job worker`, job);
+fileWorker.on("failed", (job, err) => {
+  console.error(`🔴 Job #${job?.id} failed with the following error:`);
+  console.error(err);
 });

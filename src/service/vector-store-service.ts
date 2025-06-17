@@ -2,8 +2,8 @@ import { ChromaClient, EmbeddingFunction } from "chromadb";
 import { generateEmbedding } from "./embedding-service";
 
 const client = new ChromaClient({
-  host: "127.0.0.1",
-  port: 8000,
+  host: process.env.CHROMA_HOST || "localhost",
+  port: parseInt(process.env.CHROMA_PORT || "8000"),
 });
 
 class GoogleAIEmbeddingFunction implements EmbeddingFunction {
@@ -46,9 +46,6 @@ export async function cleanUpPreviousData() {
     console.log("✅ Previous collection deleted successfully.");
   } catch (error: any) {
     if (error.name === "ChromaNotFoundError") {
-      console.log("No previous collection to delete. Starting fresh.");
-    }
-    if (error.message.includes("does not exist")) {
       console.log("No previous collection to delete. Starting fresh.");
     } else {
       console.log(error);

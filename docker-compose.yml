@@ -1,0 +1,39 @@
+services:
+  app:
+    build: .
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./uploads:/usr/src/app/uploads
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - chroma
+    command: node dist/index.js
+
+  worker:
+    build: . # Use the same image as the app service
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - chroma
+    volumes:
+      - ./uploads:/usr/src/app/uploads
+    command: node dist/jobs/workers/filesWorker.js
+
+  redis:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+
+  chroma:
+    image: "chromadb/chroma:1.0.13.dev120"
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+volumes:
+  chroma_data:

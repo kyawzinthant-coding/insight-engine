@@ -17,6 +17,8 @@ export const pdfChatController = async (
     // 1. Retrieve relevant context from your knowledge base
     const context = await queryKnowledgeBase(question);
 
+    console.log("context", context);
+
     // 2. Generate a response from the AI using the context
     const answer = await generateChatResponse(question, context);
 
