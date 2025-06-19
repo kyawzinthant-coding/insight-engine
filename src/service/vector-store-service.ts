@@ -1,10 +1,22 @@
 import { ChromaClient, EmbeddingFunction } from "chromadb";
 import { generateEmbedding } from "./embedding-service";
+import { generateLocalEmbedding } from "./local-ai-service";
 
 const client = new ChromaClient({
   host: process.env.CHROMA_HOST || "localhost",
   port: parseInt(process.env.CHROMA_PORT || "8000"),
 });
+
+class LocalEmbeddingFunction implements EmbeddingFunction {
+  public async generate(texts: string[]): Promise<number[][]> {
+    const embeddings: number[][] = [];
+    for (const text of texts) {
+      const embedding = await generateLocalEmbedding(text);
+      embeddings.push(embedding);
+    }
+    return embeddings;
+  }
+}
 
 class GoogleAIEmbeddingFunction implements EmbeddingFunction {
   public async generate(texts: string[]): Promise<number[][]> {
@@ -17,7 +29,8 @@ class GoogleAIEmbeddingFunction implements EmbeddingFunction {
   }
 }
 
-const embedder = new GoogleAIEmbeddingFunction();
+// const embedder = new GoogleAIEmbeddingFunction();
+const embedder = new LocalEmbeddingFunction();
 
 export async function getKnowledgeCollection() {
   const collection = await client.getOrCreateCollection({

@@ -5,15 +5,19 @@ services:
       - "4000:4000"
     volumes:
       - ./uploads:/usr/src/app/uploads
+      - ./src:/usr/src/app/src
+      - ./tsconfig.json:/usr/src/app/tsconfig.json
     env_file:
       - .env
     depends_on:
       - redis
       - chroma
-    command: node dist/index.js
+    command: pnpm run dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   worker:
-    build: . # Use the same image as the app service
+    build: .
     env_file:
       - .env
     depends_on:
@@ -21,7 +25,11 @@ services:
       - chroma
     volumes:
       - ./uploads:/usr/src/app/uploads
-    command: node dist/jobs/workers/filesWorker.js
+      - ./src:/usr/src/app/src
+      - ./tsconfig.json:/usr/src/app/tsconfig.json
+    command: pnpm run work
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   redis:
     image: "redis:alpine"

@@ -7,7 +7,7 @@
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "work": "nodemon src/jobs/workers/filesWorker.ts",
-    "start": "node dist/index.js",
+    "start": "nodemon dist/index.js",
     "inspect": "ts-node src/inspect-db.ts"
   },
   "keywords": [],
@@ -46,6 +46,7 @@
     "morgan": "^1.10.0",
     "multer": "1.4.5-lts.1",
     "node-cron": "^4.1.0",
+    "openai": "^5.5.1",
     "pdf-parse": "^1.1.1",
     "sharp": "^0.33.5"
   }
