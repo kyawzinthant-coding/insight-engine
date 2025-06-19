@@ -33,11 +33,17 @@ export async function queryKnowledgeBase(question: string) {
   const results = await collection.query({
     queryTexts: [question],
     nResults: 5,
+    include: ["documents", "metadatas"],
   });
 
-  console.log(results);
+  const context = results.documents[0].map((doc, i) => {
+    return {
+      text: doc,
+      source: results.metadatas[0][i]?.source || "Unknown",
+    };
+  });
 
-  return results.documents[0];
+  return context;
 }
 
 export async function cleanUpPreviousData() {

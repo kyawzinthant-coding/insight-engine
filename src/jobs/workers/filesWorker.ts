@@ -1,47 +1,51 @@
 import "dotenv/config";
 import { Job, Worker } from "bullmq";
-import { processPdf } from "../../service/process-document";
 import { getKnowledgeCollection } from "../../service/vector-store-service";
 import fs from "fs/promises";
 import connection from "../../service/redis-service";
+import { getDocumentChunks } from "../../service/process-document";
 
 const fileWorker = new Worker(
   "FileQueue",
   async (job: Job) => {
-    console.log(
-      `[Worker] Picked up job #${job.id} for file: ${job.data.originalName}`
-    );
+    try {
+      console.log(
+        `[Worker] Picked up job #${job.id} for file: ${job.data.originalName}`
+      );
 
-    const chunk = await processPdf(job.data.filePath);
+      const chunks = await getDocumentChunks(job.data.filePath);
 
-    console.log(` ✅ Chunk Data from ${job.data.originalName} `);
+      if (!chunks || chunks.length === 0) {
+        console.log(
+          `No chunks were generated for ${job.data.originalName}. Skipping database insertion.`
+        );
+      } else {
+        const collection = await getKnowledgeCollection();
+        console.log(
+          `[Worker] Storing ${chunks.length} chunks in the vector database...`
+        );
+        await collection.add({
+          ids: chunks.map((_, index) => `${job.data.originalName}-${index}`),
+          metadatas: chunks.map(() => ({ source: job.data.originalName })),
+          documents: chunks,
+        });
+        console.log(
+          `[Worker] Successfully stored all chunks for job #${job.id}`
+        );
+      }
 
-    console.log(` ✅ [Worker] Finished job #${job.id}`);
-    await fs.unlink(job.data.filePath);
-
-    const collection = await getKnowledgeCollection();
-
-    console.log(
-      `[Worker] Storing ${chunk.length} chunks in the vector database...`
-    );
-
-    await collection.add({
-      ids: chunk.map((_, index) => `${job.data.originalName}-${index}`), // Create unique IDs
-      metadatas: chunk.map(() => ({ source: job.data.originalName })), // Store the source
-      documents: chunk, // The actual text chunks
-    });
-
-    console.log(`[Worker] Successfully stored all chunks for job #${job.id}`);
-
-    console.log(
-      "-------------------------------------------------------------------"
-    );
+      await fs.unlink(job.data.filePath);
+      console.log(`🗑️  Deleted temporary file: ${job.data.filePath}`);
+    } catch (error) {
+      console.error(`🔴 Error processing job #${job.id}`, error);
+      throw error;
+    }
   },
   { connection }
 );
 
 fileWorker.on("completed", (job) => {
-  console.log(`Job completed with Job id ${job.id}`);
+  console.log(`✅ Job completed with Job id ${job.id}`);
 });
 
 fileWorker.on("failed", (job, err) => {

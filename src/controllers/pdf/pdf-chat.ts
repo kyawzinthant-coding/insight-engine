@@ -15,7 +15,13 @@ export const pdfChatController = async (
     }
 
     // 1. Retrieve relevant context from your knowledge base
-    const context = await queryKnowledgeBase(question);
+    const rawContext = await queryKnowledgeBase(question);
+    const context: { text: string; source: string }[] = rawContext
+      .filter((item: any) => typeof item.source === "string")
+      .map((item: any) => ({
+        text: item.text,
+        source: String(item.source),
+      }));
 
     console.log("context", context);
 

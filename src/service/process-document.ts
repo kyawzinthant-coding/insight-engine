@@ -1,42 +1,58 @@
 import fs from "fs/promises";
-
+import path from "path";
 import pdf from "pdf-parse";
+import mammoth from "mammoth";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 
-export async function processPdf(filePath: string) {
+async function extractTextFromFile(filePath: string): Promise<string> {
+  const extension = path.extname(filePath).toLowerCase();
+  console.log(
+    `Attempting to extract text from file with extension: ${extension}`
+  );
+
+  switch (extension) {
+    case ".pdf":
+      const pdfBuffer = await fs.readFile(filePath);
+      const pdfData = await pdf(pdfBuffer);
+      return pdfData.text;
+
+    case ".docx":
+      const docxResult = await mammoth.extractRawText({ path: filePath });
+      return docxResult.value;
+
+    case ".txt":
+      return fs.readFile(filePath, "utf8");
+
+    default:
+      console.error(`Unsupported file type: ${extension}`);
+      throw new Error(`Unsupported file type: ${extension}`);
+  }
+}
+
+export async function getDocumentChunks(filePath: string): Promise<string[]> {
   try {
-    const pdfBuffer = await fs.readFile(filePath);
+    const extractedText = await extractTextFromFile(filePath);
 
-    const pdfData = await pdf(pdfBuffer);
-
-    const extractedText = pdfData.text;
-
-    console.log(`✅ Text extracted successfully.`);
-    // console.log(`   - Total Pages: ${pdfData.numpages}`);
-    // console.log(`   - Text Length: ${extractedText.length} characters\n`);
+    if (!extractedText) {
+      console.log(`No text extracted from ${path.basename(filePath)}.`);
+      return []; // Return empty array if no text
+    }
 
     const splitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 1000, // Max characters per chunk
-      chunkOverlap: 200, // Characters to overlap between chunks
+      chunkSize: 1000,
+      chunkOverlap: 200,
     });
 
     const chunks = await splitter.splitText(extractedText);
-
-    console.log(`✅ Text chunked successfully for ${filePath}.`);
-    console.log(`   - Number of chunks created: ${chunks.length}\n`);
-
-    // for (let i = 0; i < Math.min(1, chunks.length); i++) {
-    //   console.log(`\n--- Chunk ${i + 1} (Length: ${chunks[i].length}) ---`);
-    //   console.log(chunks[i]);
-    //   console.log("-------------------------------------\n");
-    // }
-
-    // if (chunks.length > 3) {
-    //   console.log(`... and ${chunks.length - 3} more chunks.`);
-    // }
-
+    console.log(`✅ Text chunked successfully for ${path.basename(filePath)}.`);
+    console.log(`   - Number of chunks created: ${chunks.length}`);
     return chunks;
   } catch (error) {
-    console.error("An error occurred during PDF processing:", error);
+    console.error(
+      `An error occurred during document processing for ${filePath}:`,
+      error
+    );
+
+    return [];
   }
 }
