@@ -36,7 +36,7 @@ The application operates using a **Retrieval-Augmented Generation (RAG)** archit
 1.  **Clone the Repository**
 
     ```bash
-    git clone <your-repo-url>
+    git clone https://github.com/kyawzinthant-coding/insight-engine.git
     cd insight-engine
     ```
 
