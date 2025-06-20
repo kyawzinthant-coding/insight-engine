@@ -1,7 +1,8 @@
+import axios from "axios";
 import OpenAI from "openai";
 
 const ollama = new OpenAI({
-  baseURL: "http://host.docker.internal:11434/v1",
+  baseURL: "http://localhost:11434/api",
   apiKey: "ollama",
 });
 
@@ -35,11 +36,25 @@ export async function generateLocalChatResponse(
 
 export async function generateLocalEmbedding(text: string): Promise<number[]> {
   try {
-    const response = await ollama.embeddings.create({
-      model: "nomic-embed-text",
-      input: text,
+    console.log("text", text);
+
+    const response = await axios.post("http://localhost:11434/api/embeddings", {
+      model: "nomic-embed-text", // Using the dedicated embedding model
+      prompt: text, // The Ollama API uses 'prompt' for the input text here
     });
-    return response.data[0].embedding;
+
+    // const response = await ollama.embeddings.create({
+    //   model: "llama3.1",
+    //   input: text,
+    // });
+
+    const embedding = response.data.embedding;
+    if (!embedding || !Array.isArray(embedding)) {
+      throw new Error("Invalid embedding response format.");
+    }
+
+    console.log("Generated local embedding:", response);
+    return embedding;
   } catch (error) {
     console.error("Error generating local embedding:", error);
     throw error;

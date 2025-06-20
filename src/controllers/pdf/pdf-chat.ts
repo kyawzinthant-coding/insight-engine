@@ -1,12 +1,13 @@
 // src/controllers/pdf/pdf-chat.ts
 import { Request, Response } from "express";
 import { queryKnowledgeBase } from "../../service/vector-store-service";
-import { generateChatResponse } from "../../service/ai-response-service";
-import { generateLocalChatResponse } from "../../service/local-ai-service";
+
 import OpenAI from "openai";
+import { generateLocalChatResponse } from "../../service/local-ai-service";
+import axios from "axios";
 
 const ollama = new OpenAI({
-  baseURL: "http://host.docker.internal:11434/v1",
+  baseURL: "http://localhost:11434/api",
   apiKey: "ollama",
 });
 export const pdfChatController = async (
@@ -39,37 +40,56 @@ export const pdfChatController = async (
     res.setHeader("Connection", "keep-alive");
     res.flushHeaders();
 
-    const stream = await ollama.chat.completions.create({
-      model: "llama3.1",
-      messages: [
-        {
-          role: "system",
-          content: `You are an expert assistant. Using ONLY the provided context, answer the user's question.`,
-        },
-        {
-          role: "user",
-          content: `CONTEXT:\n${formattedContext}\n\nQUESTION:\n${question}`,
-        },
-      ],
-      stream: true,
+    const response = await axios.post(
+      "http://localhost:11434/api/chat",
+      {
+        model: "llama3.1",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert assistant. Using ONLY the provided context, answer the user's question.`,
+          },
+          {
+            role: "user",
+            content: `CONTEXT:\n${formattedContext}\n\nQUESTION:\n${question}`,
+          },
+        ],
+        stream: true,
+      },
+      { responseType: "stream" }
+    );
+
+    response.data.on("data", (chunk: Buffer) => {
+      const jsonString = chunk.toString("utf-8");
+
+      const jsonObjects = jsonString.split("\n").filter(Boolean);
+
+      for (const obj of jsonObjects) {
+        const parsed = JSON.parse(obj);
+        const content = parsed.message?.content || "";
+        if (content) {
+          res.write(`data: ${JSON.stringify({ token: content })}\n\n`);
+        }
+      }
     });
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || "";
-      // Format the chunk in the Server-Sent Event format
-      console.log("Chunk received:", content);
-      res.write(`data: ${JSON.stringify({ token: content })}\n\n`);
-    }
-
-    res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-    res.end();
+    response.data.on("end", () => {
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    });
 
     // res.status(200).json({ answer });
   } catch (error: any) {
     console.error("🔴 Error in chat controller:", error);
-    res.status(500).json({
-      message: "An error occurred while generating a response.",
-      error: error.message,
-    });
+
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: "An error occurred while generating a response.",
+        error: error.message,
+      });
+    } else {
+      // If the stream has already started, just end it.
+      res.end();
+    }
   }
 };

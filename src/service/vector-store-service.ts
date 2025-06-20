@@ -3,8 +3,8 @@ import { generateEmbedding } from "./embedding-service";
 import { generateLocalEmbedding } from "./local-ai-service";
 
 const client = new ChromaClient({
-  host: process.env.CHROMA_HOST || "localhost",
-  port: parseInt(process.env.CHROMA_PORT || "8000"),
+  host: process.env.CHROMA_HOST,
+  port: parseInt(process.env.CHROMA_PORT),
 });
 
 class LocalEmbeddingFunction implements EmbeddingFunction {
