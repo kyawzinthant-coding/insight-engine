@@ -29,10 +29,11 @@ const fileWorker = new Worker(
           await fs.unlink(job.data.filePath);
           console.log(`🗑️  Deleted temporary file: ${job.data.filePath}`);
         }
-        return; // End the job successfully
+        return;
       }
 
       const collection = await getKnowledgeCollection();
+
       await collection.add({
         ids: chunks.map((_, index) => `${sourceName}-${index}`),
         metadatas: chunks.map(() => ({ source: sourceName })),

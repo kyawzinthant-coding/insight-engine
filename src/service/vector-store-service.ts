@@ -59,6 +59,12 @@ export async function queryKnowledgeBase(question: string) {
   return context;
 }
 
+export async function getAllKnowledge() {
+  const collection = await getKnowledgeCollection();
+  const allItems = await collection.get();
+  return allItems.documents;
+}
+
 export async function cleanUpPreviousData() {
   try {
     await client.deleteCollection({ name: "insight_engine_knowledge" });

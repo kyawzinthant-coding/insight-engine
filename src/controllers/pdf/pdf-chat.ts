@@ -1,15 +1,8 @@
-// src/controllers/pdf/pdf-chat.ts
 import { Request, Response } from "express";
 import { queryKnowledgeBase } from "../../service/vector-store-service";
 
-import OpenAI from "openai";
-import { generateLocalChatResponse } from "../../service/local-ai-service";
 import axios from "axios";
 
-const ollama = new OpenAI({
-  baseURL: "http://localhost:11434/api",
-  apiKey: "ollama",
-});
 export const pdfChatController = async (
   req: Request,
   res: Response
@@ -22,7 +15,6 @@ export const pdfChatController = async (
       return res.status(400).json({ message: "Question is required." });
     }
 
-    // 1. Retrieve relevant context from your knowledge base
     const rawContext = await queryKnowledgeBase(question);
     const context: { text: string; source: string }[] = rawContext
       .filter((item: any) => typeof item.source === "string")
@@ -77,8 +69,6 @@ export const pdfChatController = async (
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
       res.end();
     });
-
-    // res.status(200).json({ answer });
   } catch (error: any) {
     console.error("🔴 Error in chat controller:", error);
 
@@ -88,7 +78,6 @@ export const pdfChatController = async (
         error: error.message,
       });
     } else {
-      // If the stream has already started, just end it.
       res.end();
     }
   }

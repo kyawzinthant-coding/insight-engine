@@ -60,3 +60,31 @@ export async function generateLocalEmbedding(text: string): Promise<number[]> {
     throw error;
   }
 }
+
+export async function streamSummaryResponse(context: string) {
+  try {
+    const stream = await axios.post(
+      "http://localhost:11434/api/chat",
+      {
+        model: "llama3.1",
+        messages: [
+          {
+            role: "system",
+            content: `You are an expert summarizer. Your job is to provide a concise, well-structured summary of the provided context. Use Markdown for formatting, including a main title, bullet points, and bold text for key ideas.`,
+          },
+          {
+            role: "user",
+            content: `CONTEXT:\n${context}\n\nPlease provide a summary of the text above.`,
+          },
+        ],
+        stream: true,
+      },
+      { responseType: "stream" }
+    );
+
+    return stream;
+  } catch (error) {
+    console.error("Error creating summary stream:", error);
+    throw new Error("Failed to create summary stream from local model.");
+  }
+}

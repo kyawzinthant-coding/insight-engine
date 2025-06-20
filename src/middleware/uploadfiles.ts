@@ -6,7 +6,6 @@ import fs from "fs";
 
 const UPLOADS_FOLDER = "./uploads";
 
-// Ensure the uploads directory exists
 if (!fs.existsSync(UPLOADS_FOLDER)) {
   fs.mkdirSync(UPLOADS_FOLDER);
 }
