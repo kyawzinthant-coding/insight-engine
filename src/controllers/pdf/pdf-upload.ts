@@ -12,6 +12,7 @@ export const pdfUploadFilesController = async (
   }
 
   const files = req.files as Express.Multer.File[];
+  const jobIds: string[] = []; // arry to hodld job IDs if needed
 
   try {
     await cleanUpPreviousData();
@@ -19,14 +20,16 @@ export const pdfUploadFilesController = async (
     for (const file of files) {
       console.log(`Adding job to queue for file: ${file.originalname}`);
 
-      await fileQueue.add("process-pdf", {
+      const job = await fileQueue.add("process-pdf", {
         filePath: file.path,
         originalName: file.filename,
       });
+      jobIds.push(job.id);
     }
 
     res.status(200).json({
       message: `Successfully cleared old data and queued ${files.length} new files for processing!`,
+      jobIds: jobIds,
     });
   } catch (error) {
     console.error("🔴 FULL ERROR OBJECT IN CONTROLLER:", error);
