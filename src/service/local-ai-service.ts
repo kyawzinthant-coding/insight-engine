@@ -2,9 +2,13 @@ import axios from "axios";
 import OpenAI from "openai";
 
 const ollama = new OpenAI({
-  baseURL: "http://localhost:11434/api",
+  baseURL: process.env.OLLAMA_BASE_URL || "http://localhost:11434",
   apiKey: "ollama",
 });
+
+const ollama_url = `${
+  process.env.OLLAMA_BASE_URL || "http://localhost:11434"
+}/api`;
 
 export async function generateLocalChatResponse(
   question: string,
@@ -38,7 +42,7 @@ export async function generateLocalEmbedding(text: string): Promise<number[]> {
   try {
     console.log("text", text);
 
-    const response = await axios.post("http://localhost:11434/api/embeddings", {
+    const response = await axios.post(`${ollama_url}/embeddings`, {
       model: "nomic-embed-text", // Using the dedicated embedding model
       prompt: text, // The Ollama API uses 'prompt' for the input text here
     });

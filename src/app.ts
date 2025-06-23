@@ -3,6 +3,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import { Request, Response, NextFunction } from "express";
 import router from "./routes";
+import cors from "cors";
 
 export const app = express();
 
@@ -10,7 +11,8 @@ app
   .use(morgan("dev"))
   .use(helmet())
   .use(express.urlencoded({ extended: true }))
-  .use(express.json());
+  .use(express.json())
+  .use(cors());
 
 app.use((req, res, next) => {
   res.setHeader("Cross-Origin-Resource-Policy", "same-site");

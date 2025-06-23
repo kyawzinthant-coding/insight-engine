@@ -39,9 +39,7 @@ export const pdfChatController = async (
         messages: [
           {
             role: "system",
-            content: `You are an expert assistant.
-             Must Using ONLY the provided context,
-            answer the user's question.`,
+            content: `You are an expert assistant. Using ONLY the provided context, answer the user's question. Format your entire response using Markdown, including bullet points and bold text where appropriate.`,
           },
           {
             role: "user",

@@ -11,43 +11,54 @@ export const jobStatusController = async (
     return res.status(400).json({ message: "Job ID(s) must be provided." });
   }
 
-  // This robustly handles both a single ID (string) and multiple IDs (array)
-  // by ensuring jobIds is always an array.
   const jobIds = [].concat(ids as any);
 
   try {
     const jobs = await Promise.all(
-      jobIds.map((id) => fileQueue.getJob(String(id)))
+      jobIds.map(async (id) => {
+        const job = await fileQueue.getJob(String(id));
+        if (!job) return { id, status: "not found", progress: 0 };
+
+        const status = await job.getState();
+        const progress = job.progress;
+        return { id, status, progress };
+      })
     );
 
-    let overallStatus = "processing";
-    const totalJobs = jobs.length;
-    let completedCount = 0;
+    // This object will aggregate all the progress data
+    const progressData = {
+      documentsProcessed: 0,
+      chunksGenerated: 0,
+      vectorsStored: 0,
+      status: "processing",
+    };
+
+    let completedJobs = 0;
     let hasFailedJob = false;
 
     for (const job of jobs) {
       if (!job) continue;
-      const state = await job.getState();
 
-      if (state === "failed") {
+      if (job.status === "failed") {
         hasFailedJob = true;
         break;
       }
-      if (state === "completed") {
-        completedCount++;
+      if (job.status === "completed") {
+        completedJobs++;
       }
     }
 
+    progressData.documentsProcessed = completedJobs;
+
     if (hasFailedJob) {
-      overallStatus = "failed";
-    } else if (completedCount === totalJobs) {
-      overallStatus = "completed";
+      progressData.status = "failed";
+    } else if (completedJobs === jobs.length) {
+      progressData.status = "completed";
     }
 
     res.status(200).json({
-      status: overallStatus,
-      completed: completedCount,
-      total: totalJobs,
+      summary: progressData,
+      jobs: jobs,
     });
   } catch (error: any) {
     console.error("🔴 Error fetching job status:", error);

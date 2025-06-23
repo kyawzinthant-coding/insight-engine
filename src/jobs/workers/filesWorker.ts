@@ -14,6 +14,8 @@ const fileWorker = new Worker(
       let chunks: string[] = [];
       let sourceName: string = "";
 
+      await job.updateProgress({ stage: "chunking", progress: 0 });
+
       if (job.name === "process-pdf") {
         chunks = await getDocumentChunks(job.data.filePath);
         sourceName = job.data.originalName;
@@ -21,6 +23,12 @@ const fileWorker = new Worker(
         chunks = await getUrlChunks(job.data.url);
         sourceName = job.data.url;
       }
+
+      await job.updateProgress({
+        stage: "chunking",
+        progress: 100,
+        chunkCount: chunks.length,
+      });
 
       if (!chunks || chunks.length === 0) {
         console.log(`No chunks generated for ${sourceName}. Skipping.`);
@@ -33,12 +41,28 @@ const fileWorker = new Worker(
       }
 
       const collection = await getKnowledgeCollection();
+      const totalChunks = chunks.length;
 
-      await collection.add({
-        ids: chunks.map((_, index) => `${sourceName}-${index}`),
-        metadatas: chunks.map(() => ({ source: sourceName })),
-        documents: chunks,
+      for (let i = 0; i < totalChunks; i++) {
+        const chunk = chunks[i];
+
+        await collection.add({
+          ids: [`${sourceName}-${i}`],
+          metadatas: [{ source: sourceName }],
+          documents: [chunk],
+        });
+
+        // Report progress as a percentage (0-100)
+        const progress = Math.round(((i + 1) / totalChunks) * 100);
+        await job.updateProgress(progress);
+      }
+
+      await job.updateProgress({
+        stage: "embedding",
+        progress: 100,
+        vectorCount: chunks.length,
       });
+
       console.log(
         `[Worker] Successfully stored ${chunks.length} chunks for ${sourceName}`
       );
